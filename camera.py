@@ -2,14 +2,16 @@ import pyglet
 from pyglet.gl import *
 
 class Camera:
-    def __init__(self, eye, target):
+    def __init__(self, eye, target, aspect):
         '''
         parameters:
             eye (list of 3 float): camera position
             target (list of 3 float): target position
+            aspect (float): aspect ratio for window
         '''
         self.eye = eye
         self.target = target
+        self.aspect = aspect
         self._pitch = 0
         self._yaw = 0
         self._roll = 0
@@ -22,7 +24,7 @@ class Camera:
                   0, 1, 0)
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        gluPerspective(90, 1, 1, 5000)
+        gluPerspective(90, self.aspect, 1, 5000)
         glEnable(GL_LIGHTING)
 
     def hud_mode(self):

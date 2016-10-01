@@ -1,5 +1,7 @@
 import pyglet
 from pyglet.gl import *
+import random
+from math import sin, pi
 
 def glvec(args):
     return (GLfloat * len(args))(*args)
@@ -7,18 +9,26 @@ def glvec(args):
 
 class SpotLight:
     '''localized lightsource'''
-    def __init__(self, position, color):
-        '''color: list of three floats for rgb \
-position: list of three floats'''
+    def __init__(self, position, color=[1.0, 1.0, 1.0], direction=(0, 0, -1.0)):
+        '''
+        parameters:
+            position (list of 3 floats): x, y, z
+            color (list of 3 floats): rgb
+            direction (iterable of 3 floats): direction light points
+            '''
         
-        self.position = glvec(position+[1.0])
+        self.position = glvec(position + [1.0])
         self.color = glvec(color+[1.0])
+        self.direction = glvec(direction)
 
     def set_position(self, position):
         self.position = glvec(position+[1.0])
 
     def set_color(self, color):
         self.color = glvec(color+[1.0])
+
+    def set_direction(self, direction):
+        self.direction = glvec(direction)
 
 class MasterLight:
     '''light source at infinity'''
@@ -62,13 +72,53 @@ class LightSet:
             glEnable(gl_light)
             glLightfv(gl_light, GL_POSITION, light.position)
             glLightfv(gl_light, GL_DIFFUSE, light.color)
+            glLightfv(gl_light, GL_SPOT_DIRECTION, light.direction)
+
+    def set_ambient(self, color):
+        self.masterLight.set_color(color)
 
     def add_light(self, light):
         if self.lights_avail:
             self.external_lights.append((light, self.lights_avail.pop()))
+            return self.external_lights[-1][0]
+        else:
+            raise IndexError, "No more available lights (max: 7)"
 
     def remove_light(self, light):
         for entry in self.external_lights:
             if entry[0] is light:
                 self.external_lights.remove(entry)
                 self.lights_avail.add(entry[1])
+
+class CandleLight:
+    omegas = [5*pi/2, 3*pi/2]
+    base_color = (1.0, .9, .7)
+    dim_factor = .06
+    cycle_length = 2
+    def __init__(self, position, max_intensity=1):
+        self.position = glvec(position + [1.0])
+        self.max_intensity = max_intensity
+        self.clock = 0
+        self.flicker = False
+        self.set_color()
+        self.direction = glvec((0, 0, -1))
+
+
+    def set_color(self):
+        if self.flicker:
+            intensity = self.max_intensity - self.dim_factor*sum([sin(omega*self.clock)**2
+                                               for omega in self.omegas])
+        else:
+            intensity = self.max_intensity
+        self.color = glvec([c*intensity for c in self.base_color] + [1.0])
+
+    def update(self, dt):
+        self.clock += dt
+        self.clock = self.clock%self.cycle_length
+        if abs(self.clock - self.cycle_length) < dt:
+            if self.flicker == False and random.random() > .67:
+                self.flicker = True
+            elif self.flicker == True and random.random() > .33:
+                self.flicker = False
+        self.set_color()
+    
