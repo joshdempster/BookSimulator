@@ -1,54 +1,31 @@
 import pyglet
+import director as dr
 import page
 from camera import Camera
-from math import sin, cos
 import lights
 
-if __name__ == '__main__':
-    width, height, size = 50, 50, 500
-    pointsL = [(0, 0),
-               (-.07*size, .15*size),
-               (-.2*size, .15*size),
-               (-.3*size, .12*size),
-               (-size, .06*size)]
-    config = pyglet.gl.Config(sample_buffers=1, samples=4)
-    window = pyglet.window.Window(3*size, 2*size, config=config)
 
-    length = size/width
-    img = pyglet.image.load('parchment.png')
-    flagR = page.FlatMesh(width, height, length, img.texture)
-    flagL = page.FlatMesh(width, height, length, img.texture)
-    lightset = lights.LightSet()
-    candle = lightset.add_light(lights.CandleLight([size/2, size/2, 800], .9))
-    lightset.set_ambient([0, 0, 0])
-    camera =  Camera([0, .2*size, .8*size], [0, size/2, 0], aspect=window.width*1.0/window.height)
-    
+def main():
+    config = pyglet.gl.Config(sample_buffers=1, samples=4)
+    window  = pyglet.window.Window(1200, 600, config=config)
+    camera = Camera(
+        [0, 200, 1200],
+        [0, page.Page.size/2, 0],
+        aspect=window.width*1.0/window.height,
+        field_of_view=30, width=window.width, height=window.height)
+    director = dr.Director()
+    book = page.Book(camera, window, 20)
+    for scene in book.scenes:
+        scene.add_hud_object(page.create_random_page())
+    light = book.add_light(lights.CandleLight([250, 350, 800], .9))
+    book.set_ambient([.05, .07, .08])
+    director.start_scene(book)
     @window.event
     def on_draw():
         window.clear()
-        camera.focus()
-        lightset.draw()
-        flagR.draw()
-        flagL.draw()
-        camera.hud_mode()
-
-    verticesL, verticesR, normalsL, normalsR = [], [], [], []
-    for i in range(width+1):
-        xL, zL, nxL, nzL = page.bezier5curve(i*1.0/(width+1), pointsL)
-        for j in range(height+1):
-            verticesL.extend([xL, j*length, zL])
-            normalsL.extend([nxL, 0, nzL])
-            verticesR.extend([-xL, j*length, zL])
-            normalsR.extend([-nxL, 0, nzL])
-    flagR.update_vertices(verticesR)
-    flagR.update_normals(normalsR)
-    flagL.update_vertices(verticesL)
-    flagL.update_normals(normalsL)
-
-    def update(dt):
-        candle.update(dt)
-        window.clear()
-        
-    pyglet.clock.schedule_interval(update, 2.0/120)
-
+        director.draw()
+    pyglet.clock.schedule_interval(director.update, 1.0/60)
     pyglet.app.run()
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,4 @@
+Grimoire
+pyglet>=1.2
+numpy>=1.1
+loremipsum>=1.0

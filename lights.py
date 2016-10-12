@@ -2,6 +2,7 @@ import pyglet
 from pyglet.gl import *
 import random
 from math import sin, pi
+'''wrapper for OpenGL lights.'''
 
 def glvec(args):
     return (GLfloat * len(args))(*args)
@@ -40,7 +41,7 @@ class MasterLight:
         self.color = glvec(color+[1.0])
 
 class LightSet:
-    '''gl binding system for lights. Meant to be used as a singleton'''
+    '''gl binding system for lights.'''
     def __init__(self):
         #set up openGL context
         glClearColor(0, 0, 0, 1)
@@ -90,9 +91,10 @@ class LightSet:
                 self.external_lights.remove(entry)
                 self.lights_avail.add(entry[1])
 
+
 class CandleLight:
     omegas = [5*pi/2, 3*pi/2]
-    base_color = (1.0, .9, .7)
+    base_color = (1.0, .9, .65)
     dim_factor = .06
     cycle_length = 2
     def __init__(self, position, max_intensity=1):
@@ -118,7 +120,7 @@ class CandleLight:
         if abs(self.clock - self.cycle_length) < dt:
             if self.flicker == False and random.random() > .67:
                 self.flicker = True
-            elif self.flicker == True and random.random() > .33:
+            elif self.flicker == True and random.random() > .5:
                 self.flicker = False
         self.set_color()
     
